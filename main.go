@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"fmt"
 	"votingblockchain/chain"
 )
@@ -16,7 +17,8 @@ func main() {
 		fmt.Printf("Prev. hash: %x\n", block.PrevHash)
 		fmt.Printf("Data: %s\n", block.Data)
 		fmt.Printf("Hash: %x\n", block.Hash)
-		fmt.Printf("SignHash: %v\n", ecdsa.VerifyASN1(&block.PubKey, block.SignHash, block.Signature))
+		x, y := elliptic.Unmarshal(elliptic.P256(), block.PubKey)
+		fmt.Printf("SignHash: %v\n", ecdsa.VerifyASN1(&ecdsa.PublicKey{elliptic.P256(), x, y}, block.SignHash, block.Signature))
 		fmt.Println()
 	}
 }

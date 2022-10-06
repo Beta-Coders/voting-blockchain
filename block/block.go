@@ -3,6 +3,7 @@ package block
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/sha256"
 	"strconv"
 	"time"
@@ -15,11 +16,16 @@ type Block struct {
 	Data      []byte
 	Signature []byte
 	SignHash  []byte
-	PubKey    ecdsa.PublicKey
+	PubKey    []byte
 }
 
 func NewBlock(prevHash []byte, data string, signature []byte, signhash []byte, pubKey ecdsa.PublicKey) *Block {
-	b := &Block{time.Now().Unix(), []byte{}, prevHash, []byte(data), signature, signhash, pubKey}
+	var pubkey []byte
+	var pubkeyEmpty ecdsa.PublicKey
+	if pubKey != pubkeyEmpty {
+		pubkey = elliptic.Marshal(pubKey.Curve, pubKey.X, pubKey.Y)
+	}
+	b := &Block{time.Now().Unix(), []byte{}, prevHash, []byte(data), signature, signhash, pubkey}
 	b.setHash()
 	return b
 }
