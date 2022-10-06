@@ -1,9 +1,11 @@
 package chain
 
 import (
+	"fmt"
 	"log"
 	"votingblockchain/ECC"
 	"votingblockchain/block"
+	"votingblockchain/database"
 
 	"github.com/boltdb/bolt"
 )
@@ -13,14 +15,14 @@ type BlockChain struct {
 	db  *bolt.DB
 }
 
-const blocksBucket = "blocks"
-const dbFile = "blockchain.db"
+const BlocksBucket = "blocks"
+const DbFile = "blockchain.db"
 
 func (bc *BlockChain) AddBlock(data string) {
 	var lastHash []byte
 
 	err := bc.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(blocksBucket))
+		b := tx.Bucket([]byte(BlocksBucket))
 		lastHash = b.Get([]byte("l"))
 
 		return nil
@@ -31,7 +33,7 @@ func (bc *BlockChain) AddBlock(data string) {
 	_, pubkey, _, _, signature, signhash := ECC.GenKeys()
 	newBlock := block.NewBlock(lastHash, data, signature, signhash, pubkey)
 	err = bc.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(blocksBucket))
+		b := tx.Bucket([]byte(BlocksBucket))
 		err := b.Put(newBlock.Hash, newBlock.Serialize())
 		if err != nil {
 			log.Fatal(err)
@@ -45,17 +47,18 @@ func (bc *BlockChain) AddBlock(data string) {
 
 func NewBlockChain() *BlockChain {
 	var tip []byte
-	db, err := bolt.Open(dbFile, 0600, nil)
+	db, err := bolt.Open(DbFile, 0600, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(blocksBucket))
+		b := tx.Bucket([]byte(BlocksBucket))
 
 		if b == nil {
 			genesis := block.NewGenesisBlock()
-			b, err := tx.CreateBucket([]byte(blocksBucket))
+			b, err := tx.CreateBucket([]byte(BlocksBucket))
+			fmt.Println("creating new blockchain...")
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -72,4 +75,8 @@ func NewBlockChain() *BlockChain {
 	bc := BlockChain{tip, db}
 
 	return &bc
+}
+func (bc *BlockChain) Iterator() *database.BlockchainIterator {
+	bci := &database.BlockchainIterator{CurrentHash: bc.tip, Db: bc.db}
+	return bci
 }

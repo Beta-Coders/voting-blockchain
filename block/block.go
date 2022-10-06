@@ -29,7 +29,7 @@ func NewBlock(prevHash []byte, data string, signature []byte, signhash []byte, p
 	}
 	b := &Block{time.Now().Unix(), []byte{}, prevHash, []byte(data), signature, signhash, pubkey}
 	b.setHash()
-	return DeserializeBlock(b.Serialize())
+	return b
 }
 
 func (b *Block) setHash() {
