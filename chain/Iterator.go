@@ -1,9 +1,10 @@
 package chain
 
 import (
-	"github.com/boltdb/bolt"
 	"log"
 	"votingblockchain/block"
+
+	"github.com/boltdb/bolt"
 )
 
 type BlockchainIterator struct {
@@ -23,5 +24,6 @@ func (i *BlockchainIterator) Next() *block.Block {
 	if err != nil {
 		log.Fatal(err)
 	}
+	i.CurrentHash = deserializedBlock.PrevHash
 	return deserializedBlock
 }
