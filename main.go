@@ -18,7 +18,7 @@ func main() {
 		fmt.Printf("Data: %s\n", block.Data)
 		fmt.Printf("Hash: %x\n", block.Hash)
 		x, y := elliptic.Unmarshal(elliptic.P256(), block.PubKey)
-		fmt.Printf("SignHash: %v\n", ecdsa.VerifyASN1(&ecdsa.PublicKey{elliptic.P256(), x, y}, block.SignHash, block.Signature))
+		fmt.Printf("SignHash: %v\n", ecdsa.VerifyASN1(&ecdsa.PublicKey{Curve: elliptic.P256(), X: x, Y: y}, block.SignHash, block.Signature))
 		fmt.Println()
 	}
 }

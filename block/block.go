@@ -5,6 +5,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/sha256"
+	"encoding/gob"
+	"log"
 	"strconv"
 	"time"
 )
@@ -27,7 +29,7 @@ func NewBlock(prevHash []byte, data string, signature []byte, signhash []byte, p
 	}
 	b := &Block{time.Now().Unix(), []byte{}, prevHash, []byte(data), signature, signhash, pubkey}
 	b.setHash()
-	return b
+	return DeserializeBlock(b.Serialize())
 }
 
 func (b *Block) setHash() {
@@ -40,6 +42,28 @@ func (b *Block) setHash() {
 func NewGenesisBlock() *Block {
 	var pubkey ecdsa.PublicKey
 	return NewBlock([]byte{}, "Genesis Block", []byte{}, []byte{}, pubkey)
+}
+func (b *Block) Serialize() []byte {
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+
+	err := encoder.Encode(b)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return result.Bytes()
+}
+func DeserializeBlock(d []byte) *Block {
+	var block Block
+
+	decoder := gob.NewDecoder(bytes.NewReader(d))
+	err := decoder.Decode(&block)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &block
 }
 
 // pub priv gen ->
