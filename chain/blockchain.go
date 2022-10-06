@@ -2,12 +2,10 @@ package chain
 
 import (
 	"fmt"
+	"github.com/boltdb/bolt"
 	"log"
 	"votingblockchain/ECC"
 	"votingblockchain/block"
-	"votingblockchain/database"
-
-	"github.com/boltdb/bolt"
 )
 
 type BlockChain struct {
@@ -76,7 +74,7 @@ func NewBlockChain() *BlockChain {
 
 	return &bc
 }
-func (bc *BlockChain) Iterator() *database.BlockchainIterator {
-	bci := &database.BlockchainIterator{CurrentHash: bc.tip, Db: bc.db}
+func (bc *BlockChain) Iterator() *BlockchainIterator {
+	bci := &BlockchainIterator{CurrentHash: bc.tip, Db: bc.db}
 	return bci
 }

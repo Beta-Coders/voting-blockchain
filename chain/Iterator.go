@@ -1,10 +1,9 @@
-package database
+package chain
 
 import (
 	"github.com/boltdb/bolt"
 	"log"
 	"votingblockchain/block"
-	"votingblockchain/chain"
 )
 
 type BlockchainIterator struct {
@@ -16,7 +15,7 @@ func (i *BlockchainIterator) Next() *block.Block {
 	var deserializedBlock *block.Block
 
 	err := i.Db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(chain.BlocksBucket))
+		b := tx.Bucket([]byte(BlocksBucket))
 		serializedBlock := b.Get(i.CurrentHash)
 		deserializedBlock = block.DeserializeBlock(serializedBlock)
 		return nil
