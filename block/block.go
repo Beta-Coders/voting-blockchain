@@ -21,6 +21,7 @@ type Block struct {
 	PubKey    []byte
 }
 
+// NewBlock creates a new block in the blockchain with the given data and previous hash
 func NewBlock(prevHash []byte, data string, signature []byte, signhash []byte, pubKey ecdsa.PublicKey) *Block {
 	var pubkey []byte
 	var pubkeyEmpty ecdsa.PublicKey
@@ -39,6 +40,7 @@ func (b *Block) setHash() {
 	b.Hash = hash[:]
 }
 
+// NewGenesisBlock creates the genesis block when the blockchain is created
 func NewGenesisBlock() *Block {
 	var pubkey ecdsa.PublicKey
 	return NewBlock([]byte{}, "Genesis Block", []byte{}, []byte{}, pubkey)
@@ -54,6 +56,7 @@ func (b *Block) Serialize() []byte {
 
 	return result.Bytes()
 }
+
 func DeserializeBlock(d []byte) *Block {
 	var block Block
 

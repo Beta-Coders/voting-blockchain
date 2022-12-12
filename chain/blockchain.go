@@ -28,7 +28,7 @@ func (bc *BlockChain) AddBlock(data string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, pubkey, _, _, signature, signhash := ECC.GenKeys()
+	_, pubkey, _, _, signature, signhash := ECC.GenKeys(data)
 	newBlock := block.NewBlock(lastHash, data, signature, signhash, pubkey)
 	err = bc.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BlocksBucket))
