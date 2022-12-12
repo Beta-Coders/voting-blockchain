@@ -5,6 +5,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/sha256"
+	"encoding/gob"
+	"log"
 	"strconv"
 	"time"
 )
@@ -19,6 +21,7 @@ type Block struct {
 	PubKey    []byte
 }
 
+// NewBlock creates a new block in the blockchain with the given data and previous hash
 func NewBlock(prevHash []byte, data string, signature []byte, signhash []byte, pubKey ecdsa.PublicKey) *Block {
 	var pubkey []byte
 	var pubkeyEmpty ecdsa.PublicKey
@@ -37,9 +40,33 @@ func (b *Block) setHash() {
 	b.Hash = hash[:]
 }
 
+// NewGenesisBlock creates the genesis block when the blockchain is created
 func NewGenesisBlock() *Block {
 	var pubkey ecdsa.PublicKey
 	return NewBlock([]byte{}, "Genesis Block", []byte{}, []byte{}, pubkey)
+}
+func (b *Block) Serialize() []byte {
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+
+	err := encoder.Encode(b)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return result.Bytes()
+}
+
+func DeserializeBlock(d []byte) *Block {
+	var block Block
+
+	decoder := gob.NewDecoder(bytes.NewReader(d))
+	err := decoder.Decode(&block)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return &block
 }
 
 // pub priv gen ->

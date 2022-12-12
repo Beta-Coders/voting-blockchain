@@ -11,7 +11,8 @@ import (
 	"os"
 )
 
-func GenKeys() (*ecdsa.PrivateKey, ecdsa.PublicKey, *ecdsa.PrivateKey, ecdsa.PublicKey, []byte, []byte) {
+// GenKeys generates 2 pairs of keys using ECC
+func GenKeys(data string) (*ecdsa.PrivateKey, ecdsa.PublicKey, *ecdsa.PrivateKey, ecdsa.PublicKey, []byte, []byte) {
 	pubkeyCurve := elliptic.P256()
 	privatekey := new(ecdsa.PrivateKey)
 	privatekey, err := ecdsa.GenerateKey(pubkeyCurve, rand.Reader)
@@ -23,7 +24,10 @@ func GenKeys() (*ecdsa.PrivateKey, ecdsa.PublicKey, *ecdsa.PrivateKey, ecdsa.Pub
 	pubkey = privatekey.PublicKey
 	var h hash.Hash
 	h = md5.New()
-	io.WriteString(h, "This is a message to be signed and verified by ECDSA!")
+	_, err = io.WriteString(h, data)
+	if err != nil {
+		return nil, ecdsa.PublicKey{}, nil, ecdsa.PublicKey{}, nil, nil
+	}
 	signhash := h.Sum(nil)
 	signature, serr := ecdsa.SignASN1(rand.Reader, privatekey, signhash)
 	if serr != nil {
