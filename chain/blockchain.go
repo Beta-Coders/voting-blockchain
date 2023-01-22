@@ -16,7 +16,7 @@ type BlockChain struct {
 const BlocksBucket = "blocks"
 const DbFile = "blockchain.db"
 
-func (bc *BlockChain) AddBlock(data string) {
+func (bc *BlockChain) AddBlock(candidateName string, username string) {
 	var lastHash []byte
 
 	err := bc.db.View(func(tx *bolt.Tx) error {
@@ -28,8 +28,8 @@ func (bc *BlockChain) AddBlock(data string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, pubkey, _, _, signature, signhash := ECC.GenKeys(data)
-	newBlock := block.NewBlock(lastHash, data, signature, signhash, pubkey)
+	_, pubkey, _, _, signature, signhash := ECC.GenKeys(username)
+	newBlock := block.NewBlock(lastHash, candidateName, username, signature, signhash, pubkey)
 	err = bc.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BlocksBucket))
 		err := b.Put(newBlock.Hash, newBlock.Serialize())

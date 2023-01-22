@@ -16,3 +16,9 @@ type Candidate struct {
 	CandidateName string `json:"candidate_name"`
 	PartyName     string `json:"party_name"`
 }
+
+type Vote struct {
+	Username      string `json:"username"`
+	CandidateName string `json:"candidate_name"`
+	Pubkey        string `json:"pubkey"`
+}

@@ -22,7 +22,13 @@ func (controller *VotingController) GetVoteByUsername(c echo.Context) error {
 
 // Vote - create voting
 func (controller *VotingController) Vote(c echo.Context) (err error) {
-	return nil
+	vote := new(model.Vote)
+	if err = c.Bind(vote); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	bc := controller.container.GetBC()
+	bc.AddBlock(vote.CandidateName, vote.Username)
+	return c.JSON(http.StatusOK, model.Response{Message: "success"})
 }
 
 // UpdateVoting - update voting
@@ -32,7 +38,22 @@ func (controller *VotingController) UpdateVoting(c echo.Context) (err error) {
 
 // GetVotingResults - get voting results
 func (controller *VotingController) GetVotingResults(c echo.Context) error {
-	return nil
+	bc := controller.container.GetBC()
+	it := bc.Iterator()
+	votes := make([]model.Vote, 0)
+
+	for {
+		block := it.Next()
+		vote := new(model.Vote)
+		vote.CandidateName = string(block.CandidateName)
+		vote.Username = string(block.Username)
+		votes = append(votes, *vote)
+		if len(block.PrevHash) == 0 {
+			break
+		}
+	}
+	votes = votes[0 : len(votes)-1]
+	return c.JSON(http.StatusOK, votes)
 }
 
 // GetCandidates - get candidate list
