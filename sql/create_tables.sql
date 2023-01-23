@@ -11,8 +11,7 @@ CREATE TABLE IF NOT EXISTS candidates (
 );
 
 CREATE TABLE IF NOT EXISTS admins (
-    pb1 varchar(255) NOT NULL,
-    pb2 varchar(255) NOT NULL,
+    public_key varchar(255) NOT NULL,
     username varchar(255) NOT NULL primary key,
     vote boolean NOT NULL DEFAULT false
 );

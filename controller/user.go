@@ -67,11 +67,20 @@ func (controller *UserController) Signup(c echo.Context) (err error) {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	defer rows.Close()
-	fmt.Println(user)
-	pv1, pb1, pk2, pb2, _, _ := ECC.GenKeys(user.Username)
+	//fmt.Println(user)
+	pv1, pb1, _, _, signature, signhash := ECC.GenKeys(user.Username)
 	pv1Encoded, pb1Encoded := encode(pv1, &pb1)
-	pk2Encoded, pb2Encoded := encode(pk2, &pb2)
-	return c.JSON(http.StatusOK, model.Response{Message: `{"pv1":` + pv1Encoded + `,"pb1":` + pb1Encoded + `,"pk2":` + pk2Encoded + `,"pb2":` + pb2Encoded + `}`})
+	//pv2Encoded, pb2Encoded := encode(pk2, &pb2)
+	result := model.SignUp{
+		Message:   "Signup success",
+		PvEncoded: pv1Encoded,
+		PbEncoded: pb1Encoded,
+		Signature: string(signature),
+		SignHash:  string(signhash),
+	}
+	_, err = controller.container.GetDB().Exec("INSERT INTO admins (public_key,username) VALUES ($1,$2)", pb1Encoded, user.Username)
+	//fmt.Println(bytes.Compare(signature, []byte(result.Signature)))
+	return c.JSON(http.StatusOK, result)
 }
 
 func (controller *UserController) checkUserExists(username string) bool {

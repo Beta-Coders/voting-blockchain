@@ -1,6 +1,10 @@
 package controller
 
 import (
+	"crypto/ecdsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"votingblockchain/container"
@@ -23,11 +27,30 @@ func (controller *VotingController) GetVoteByUsername(c echo.Context) error {
 // Vote - create voting
 func (controller *VotingController) Vote(c echo.Context) (err error) {
 	vote := new(model.Vote)
+	curVote := new(model.CurrentVote)
 	if err = c.Bind(vote); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	bc := controller.container.GetBC()
-	bc.AddBlock(vote.CandidateName, vote.Username)
+	rows, err := controller.container.GetDB().Query("SELECT * FROM admins WHERE username=$1", vote.Username)
+	if err != nil {
+		fmt.Println(err)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+
+	}
+	defer rows.Close()
+	if !rows.Next() {
+		return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "User not found"})
+	}
+	rows.Scan(curVote.PublicKey, curVote.Username, curVote.Vote)
+	if curVote.Vote {
+		return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "User already voted"})
+	}
+	if curVote.PublicKey != vote.Pubkey {
+		return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "Invalid public key"})
+	}
+	bc.AddBlock(vote.CandidateName, vote.Username, decodePubKey(vote.Pubkey), []byte(vote.Signature), []byte(vote.SignHash))
+	_, err = controller.container.GetDB().Exec("UPDATE admins SET vote=$1 WHERE username=$2", true, vote.Username)
 	return c.JSON(http.StatusOK, model.Response{Message: "success"})
 }
 
@@ -98,4 +121,12 @@ func (controller *VotingController) AddCandidate(c echo.Context) error {
 
 func (controller *VotingController) EndVoting(c echo.Context) error {
 	return nil
+}
+
+func decodePubKey(pemEncodedPub string) *ecdsa.PublicKey {
+	blockPub, _ := pem.Decode([]byte(pemEncodedPub))
+	x509EncodedPub := blockPub.Bytes
+	genericPublicKey, _ := x509.ParsePKIXPublicKey(x509EncodedPub)
+	publicKey := genericPublicKey.(*ecdsa.PublicKey)
+	return publicKey
 }
