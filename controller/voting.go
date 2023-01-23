@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"strings"
 	"votingblockchain/container"
 	"votingblockchain/model"
 )
@@ -31,7 +32,8 @@ func (controller *VotingController) Vote(c echo.Context) (err error) {
 	if err = c.Bind(vote); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	bc := controller.container.GetBC()
+	fmt.Println(vote)
+	//bc := controller.container.GetBC()
 	rows, err := controller.container.GetDB().Query("SELECT * FROM admins WHERE username=$1", vote.Username)
 	if err != nil {
 		fmt.Println(err)
@@ -42,14 +44,17 @@ func (controller *VotingController) Vote(c echo.Context) (err error) {
 	if !rows.Next() {
 		return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "User not found"})
 	}
-	rows.Scan(curVote.PublicKey, curVote.Username, curVote.Vote)
+	rows.Scan(&curVote.PublicKey, &curVote.Username, &curVote.Vote)
 	if curVote.Vote {
 		return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "User already voted"})
 	}
-	if curVote.PublicKey != vote.Pubkey {
-		return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "Invalid public key"})
-	}
-	bc.AddBlock(vote.CandidateName, vote.Username, decodePubKey(vote.Pubkey), []byte(vote.Signature), []byte(vote.SignHash))
+	fmt.Println()
+	fmt.Println(curVote)
+	fmt.Println(strings.Compare(curVote.PublicKey, vote.Pubkey))
+	//if curVote.PublicKey != vote.Pubkey {
+	//	return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "Invalid public key"})
+	//}
+	//bc.AddBlock(vote.CandidateName, vote.Username, decodePubKey(vote.Pubkey), []byte(vote.Signature), []byte(vote.SignHash))
 	_, err = controller.container.GetDB().Exec("UPDATE admins SET vote=$1 WHERE username=$2", true, vote.Username)
 	return c.JSON(http.StatusOK, model.Response{Message: "success"})
 }

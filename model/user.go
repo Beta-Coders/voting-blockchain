@@ -20,7 +20,7 @@ type Candidate struct {
 type Vote struct {
 	Username      string `json:"username"`
 	CandidateName string `json:"candidate_name"`
-	Pubkey        string `json:"pubkey"`
+	Pubkey        string `json:"public_key"`
 	Signature     string `json:"signature"`
 	SignHash      string `json:"sign_hash"`
 }
