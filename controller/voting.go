@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strings"
+	"votingblockchain/ECC"
 	"votingblockchain/container"
 	"votingblockchain/model"
 )
@@ -27,13 +28,14 @@ func (controller *VotingController) GetVoteByUsername(c echo.Context) error {
 
 // Vote - create voting
 func (controller *VotingController) Vote(c echo.Context) (err error) {
+
 	vote := new(model.Vote)
-	curVote := new(model.CurrentVote)
+	userVote := new(model.CurrentVote)
 	if err = c.Bind(vote); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	fmt.Println(vote)
-	//bc := controller.container.GetBC()
+	bc := controller.container.GetBC()
 	rows, err := controller.container.GetDB().Query("SELECT * FROM admins WHERE username=$1", vote.Username)
 	if err != nil {
 		fmt.Println(err)
@@ -44,43 +46,33 @@ func (controller *VotingController) Vote(c echo.Context) (err error) {
 	if !rows.Next() {
 		return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "User not found"})
 	}
-	rows.Scan(&curVote.PublicKey, &curVote.Username, &curVote.Vote)
-	if curVote.Vote {
+	rows.Scan(&userVote.PublicKey, &userVote.Username, &userVote.Vote)
+	if userVote.Vote {
 		return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "User already voted"})
 	}
-	fmt.Println()
-	fmt.Println(curVote)
-	fmt.Println(strings.Compare(curVote.PublicKey, vote.Pubkey))
-	//if curVote.PublicKey != vote.Pubkey {
-	//	return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "Invalid public key"})
-	//}
-	//bc.AddBlock(vote.CandidateName, vote.Username, decodePubKey(vote.Pubkey), []byte(vote.Signature), []byte(vote.SignHash))
+	privateKey, _, err := Decode(vote.PrivateKey, userVote.PublicKey)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "malformed private key"})
+	}
+	_, stringPublicKey := Encode(privateKey, &privateKey.PublicKey)
+	if strings.Compare(stringPublicKey, userVote.PublicKey) != 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, model.Response{Message: "incorrect private key"})
+	}
+	sign, signHash := ECC.GenSign(vote.Username, privateKey)
+	bc.AddBlock(vote.CandidateName, vote.Username, decodePubKey(userVote.PublicKey), sign, signHash)
 	_, err = controller.container.GetDB().Exec("UPDATE admins SET vote=$1 WHERE username=$2", true, vote.Username)
 	return c.JSON(http.StatusOK, model.Response{Message: "success"})
 }
 
 // UpdateVoting - update voting
+// to be removed
 func (controller *VotingController) UpdateVoting(c echo.Context) (err error) {
 	return nil
 }
 
 // GetVotingResults - get voting results
 func (controller *VotingController) GetVotingResults(c echo.Context) error {
-	bc := controller.container.GetBC()
-	it := bc.Iterator()
-	votes := make([]model.Vote, 0)
-
-	for {
-		block := it.Next()
-		vote := new(model.Vote)
-		vote.CandidateName = string(block.CandidateName)
-		vote.Username = string(block.Username)
-		votes = append(votes, *vote)
-		if len(block.PrevHash) == 0 {
-			break
-		}
-	}
-	votes = votes[0 : len(votes)-1]
+	votes := getVotes(controller)
 	return c.JSON(http.StatusOK, votes)
 }
 
@@ -125,7 +117,9 @@ func (controller *VotingController) AddCandidate(c echo.Context) error {
 }
 
 func (controller *VotingController) EndVoting(c echo.Context) error {
-	return nil
+	votes := getVotes(controller)
+	controller.container.GetBC().EndVoting()
+	return c.JSON(http.StatusOK, votes)
 }
 
 func decodePubKey(pemEncodedPub string) *ecdsa.PublicKey {
@@ -134,4 +128,24 @@ func decodePubKey(pemEncodedPub string) *ecdsa.PublicKey {
 	genericPublicKey, _ := x509.ParsePKIXPublicKey(x509EncodedPub)
 	publicKey := genericPublicKey.(*ecdsa.PublicKey)
 	return publicKey
+}
+
+func getVotes(controller *VotingController) []model.VoteResponse {
+	bc := controller.container.GetBC()
+	it := bc.Iterator()
+	votes := make([]model.VoteResponse, 0)
+
+	for {
+		block := it.Next()
+		vote := new(model.VoteResponse)
+		vote.CandidateName = string(block.CandidateName)
+		vote.Username = string(block.Username)
+		votes = append(votes, *vote)
+		if len(block.PrevHash) == 0 {
+			break
+		}
+	}
+	fmt.Println(votes)
+	votes = votes[0 : len(votes)-1]
+	return votes
 }

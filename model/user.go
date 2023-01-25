@@ -1,9 +1,10 @@
 package model
 
 type User struct {
-	Id       int    `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Id         int    `json:"id"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	PrivateKey string `json:"private_key"`
 }
 
 type Response struct {
@@ -20,20 +21,21 @@ type Candidate struct {
 type Vote struct {
 	Username      string `json:"username"`
 	CandidateName string `json:"candidate_name"`
-	Pubkey        string `json:"public_key"`
-	Signature     string `json:"signature"`
-	SignHash      string `json:"sign_hash"`
-}
-type SignUp struct {
-	Message   string `json:"message"`
-	PvEncoded string `json:"pv1_encoded"`
-	PbEncoded string `json:"pb1_encoded"`
-	Signature string `json:"signature"`
-	SignHash  string `json:"sign_hash"`
+	PrivateKey    string `json:"private_key"`
 }
 
 type CurrentVote struct {
 	PublicKey string `json:"public_key"`
 	Username  string `json:"username"`
 	Vote      bool   `json:"vote"`
+}
+
+type SignUpResponse struct {
+	Username   string `json:"username"`
+	PrivateKey string `json:"private_key"`
+}
+
+type VoteResponse struct {
+	Username      string `json:"username"`
+	CandidateName string `json:"candidate_name"`
 }

@@ -15,6 +15,7 @@ type BlockChain struct {
 
 const BlocksBucket = "blocks"
 const DbFile = "blockchain.db"
+const DbLock = "blockchain.db.lock"
 
 func (bc *BlockChain) AddBlock(candidateName string, username string, publicKey *ecdsa.PublicKey, signature []byte, signhash []byte) {
 	var lastHash []byte
@@ -77,4 +78,26 @@ func NewBlockChain() *BlockChain {
 func (bc *BlockChain) Iterator() *BlockchainIterator {
 	bci := &BlockchainIterator{CurrentHash: bc.tip, Db: bc.db}
 	return bci
+}
+
+func (bc *BlockChain) EndVoting() {
+	bc.db.Update(func(tx *bolt.Tx) error {
+		if tx.Bucket([]byte(BlocksBucket)) == nil {
+			fmt.Println("Blockchain does not exist")
+			return nil
+		}
+		tx.DeleteBucket([]byte(BlocksBucket))
+		return nil
+	})
+}
+
+func CheckVotingInProgress(bc *BlockChain) bool {
+	inProgress := true
+	bc.db.Update(func(tx *bolt.Tx) error {
+		if tx.Bucket([]byte(BlocksBucket)) == nil {
+			inProgress = false
+		}
+		return nil
+	})
+	return inProgress
 }

@@ -15,3 +15,10 @@ CREATE TABLE IF NOT EXISTS admins (
     username varchar(255) NOT NULL primary key,
     vote boolean NOT NULL DEFAULT false
 );
+
+CREATE TABLE IF NOT EXISTS user_sign (
+    signature varchar(255) NOT NULL,
+    username varchar(255) NOT NULL primary key,
+    sign_hash varchar(255) NOT NULL
+    );
+
