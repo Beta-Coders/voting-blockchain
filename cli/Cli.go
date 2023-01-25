@@ -57,7 +57,7 @@ func (cli *CLI) Run() {
 			cli.printUsage()
 			os.Exit(1)
 		}
-		cli.Bc.AddBlock(*addBlockData)
+		//cli.Bc.AddBlock(*addBlockData)
 	}
 	if printChainCmd.Parsed() {
 		it := cli.Bc.Iterator()
@@ -66,7 +66,7 @@ func (cli *CLI) Run() {
 			block := it.Next()
 
 			fmt.Printf("Prev. hash: %x\n", block.PrevHash)
-			fmt.Printf("Data: %s\n", block.Data)
+			//fmt.Printf("Data: %s\n", block.Data)
 			fmt.Printf("Hash: %x\n", block.Hash)
 			x, y := elliptic.Unmarshal(elliptic.P256(), block.PubKey)
 			fmt.Printf("SignHash: %v\n", ecdsa.VerifyASN1(&ecdsa.PublicKey{Curve: elliptic.P256(), X: x, Y: y}, block.SignHash, block.Signature))

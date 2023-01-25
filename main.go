@@ -16,10 +16,7 @@ import (
 )
 
 func main() {
-
-	fmt.Println()
 	fmt.Println("starting up ....")
-	fmt.Println()
 	bc := chain.NewBlockChain()
 	defer func(Db *bolt.DB) {
 		err := Db.Close()
@@ -28,7 +25,7 @@ func main() {
 		}
 	}(bc.Iterator().Db)
 	conf := config.Load()
-	newContainer := container.NewContainer(db.Connect(conf.GetHost(), conf.GetUser(), conf.GetDBName(), conf.GetPassword(), conf.GetPort()))
+	newContainer := container.NewContainer(db.Connect(conf.GetHost(), conf.GetUser(), conf.GetDBName(), conf.GetPassword(), conf.GetPort()), bc)
 	defer func(Db *sql.DB) {
 		err := Db.Close()
 		if err != nil {
@@ -36,7 +33,6 @@ func main() {
 		}
 	}(newContainer.GetDB())
 	e := echo.New()
-
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
@@ -48,8 +44,7 @@ func main() {
 	})
 	router.Init(e, newContainer)
 	e.Logger.Fatal(e.Start(":1323"))
-	//app := *&cli.CLI{Bc: bc}
-	//app.Run()
+
 }
 
 // pair  1 admin - 2 pair private sign blocks pub
