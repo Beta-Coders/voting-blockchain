@@ -75,23 +75,55 @@ func NewBlockChain() *BlockChain {
 
 	return &bc
 }
+
+func (bc *BlockChain) StartVoting() error {
+	empty := true
+	bc.db.Update(func(tx *bolt.Tx) error {
+		if tx.Bucket([]byte(BlocksBucket)) != nil {
+			empty = false
+			return nil
+		} else {
+			genesis := block.NewGenesisBlock()
+			b, err := tx.CreateBucket([]byte(BlocksBucket))
+			fmt.Println("creating new blockchain...")
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = b.Put(genesis.Hash, genesis.Serialize())
+			err = b.Put([]byte("l"), genesis.Hash)
+			bc.tip = genesis.Hash
+			return nil
+		}
+	})
+	if !empty {
+		return fmt.Errorf("blockchain already exists")
+	}
+	return nil
+}
+
 func (bc *BlockChain) Iterator() *BlockchainIterator {
 	bci := &BlockchainIterator{CurrentHash: bc.tip, Db: bc.db}
 	return bci
 }
 
-func (bc *BlockChain) EndVoting() {
+func (bc *BlockChain) EndVoting() error {
+	empty := false
 	bc.db.Update(func(tx *bolt.Tx) error {
 		if tx.Bucket([]byte(BlocksBucket)) == nil {
 			fmt.Println("Blockchain does not exist")
+			empty = true
 			return nil
 		}
 		tx.DeleteBucket([]byte(BlocksBucket))
 		return nil
 	})
+	if empty {
+		return fmt.Errorf("blockchain does not exist")
+	}
+	return nil
 }
 
-func CheckVotingInProgress(bc *BlockChain) bool {
+func (bc *BlockChain) CheckVotingInProgress() bool {
 	inProgress := true
 	bc.db.Update(func(tx *bolt.Tx) error {
 		if tx.Bucket([]byte(BlocksBucket)) == nil {
