@@ -22,25 +22,6 @@ func GenKeys(data string) (*ecdsa.PrivateKey, ecdsa.PublicKey) {
 	}
 	var publicKey ecdsa.PublicKey
 	publicKey = privateKey.PublicKey
-	//var h hash.Hash
-	//h = md5.New()
-	//_, err = io.WriteString(h, data)
-	//if err != nil {
-	//	return nil, ecdsa.PublicKey{}
-	//}
-	//signhash := h.Sum(nil)
-	//signature, serr := ecdsa.SignASN1(rand.Reader, privateKey, signhash)
-	//if serr != nil {
-	//	fmt.Println(err)
-	//	os.Exit(1)
-	//}
-	//privatekey2, err := ecdsa.GenerateKey(publicKeyCurve, rand.Reader)
-	//if err != nil {
-	//	fmt.Println(err)
-	//	os.Exit(1)
-	//}
-	//var pubkey2 ecdsa.PublicKey
-	//pubkey2 = privatekey2.PublicKey
 	return privateKey, publicKey
 }
 func GenSign(data string, privateKey *ecdsa.PrivateKey) ([]byte, []byte) {

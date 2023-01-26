@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"strconv"
 	"strings"
 	"votingblockchain/ECC"
 	"votingblockchain/container"
@@ -152,6 +153,11 @@ func (controller *VotingController) StartVoting(c echo.Context) error {
 	}
 	fmt.Println("voting started")
 	return c.JSON(http.StatusOK, model.Response{Message: "success"})
+}
+
+func (controller *VotingController) GetVotingStatus(c echo.Context) error {
+	status := controller.container.GetBC().CheckVotingInProgress()
+	return c.JSON(http.StatusOK, model.Response{Message: strconv.FormatBool(status)})
 }
 
 func decodePubKey(pemEncodedPub string) *ecdsa.PublicKey {

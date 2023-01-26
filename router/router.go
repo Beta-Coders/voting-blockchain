@@ -19,5 +19,6 @@ func Init(e *echo.Echo, container container.Container) {
 	e.POST("/candidate", func(c echo.Context) error { return voting.AddCandidate(c) })
 	e.GET("/vote/end", func(c echo.Context) error { return voting.EndVoting(c) })
 	e.GET("/vote/start", func(c echo.Context) error { return voting.StartVoting(c) })
+	e.GET("/vote/status", func(c echo.Context) error { return voting.GetVotingStatus(c) })
 	e.GET("/vote/:username", func(c echo.Context) error { return voting.GetVoteByUsername(c) })
 }
